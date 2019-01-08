@@ -8,6 +8,8 @@
     <style>
       :host {
         display: block;
+        width: 100%;
+        height: 100%;
       }
 
       .container-column {
@@ -197,7 +199,10 @@
 
             ready() {
                 super.ready();
-                _this.startBody();
+
+                window.addEventListener('WebComponentsReady', e => {
+                    _this.startBody();
+                });
             }
 
             // /**
@@ -353,11 +358,12 @@
                 // Info.Width = 300;
                 // Info.Height = 300;
 
-                canvas.width = canvas.offsetWidth;
-                canvas.height = canvas.offsetHeight;
+                // canvas size로 설정
+                canvas.width = _this.$.containerThumbnailImage.offsetWidth;
+                canvas.height = _this.$.containerThumbnailImage.offsetHeight;
 
-                Info.Width = canvas.offsetWidth;
-                Info.Height = canvas.offsetHeight;
+                Info.Width = canvas.width;
+                Info.Height = canvas.height;
 
                 _this.setSelectCellBounds();
                 _this.setSetPositionCellBounds();
@@ -396,8 +402,9 @@
 
                 // Info.Width = window.innerWidth;
                 // Info.Height = window.innerHeight;
-                Info.Width = 300;
-                Info.Height = 300;
+
+                Info.Width = _this.$.containerThumbnailImage.offsetWidth;
+                Info.Height = _this.$.containerThumbnailImage.offsetHeight;
 
                 Info.EditMode = e_EditMode_SetPosition;
                 _this.InitializeInfoSetPosition();
