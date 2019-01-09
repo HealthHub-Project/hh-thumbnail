@@ -72,7 +72,7 @@
         width: 100%;
         text-align: center;
         background-color: #252934;
-        margin: 25px 0;
+        margin: 12px 0;
       }
 
       .canvasImage {
@@ -106,7 +106,7 @@
   <script>
     /**
      * `hh-thumbnail`
-     * 
+     *
      *
      * @customElement
      * @polymer
@@ -205,46 +205,12 @@
                 });
             }
 
-            // /**
-            //  * function getWorkListNewId
-            //  * workList Row 클릭시 Thumbnail 이미지 조회
-            //  *
-            //  * Create by 김민정 on 2018-05-17 오전 10:18
-            //  * @param {}
-            //  * @return {}
-            //  **/
-            // getWorkListNewId(id) {
-
-                // _workListObjId = id;
-                //
-                // _this.getExamInfo(id).then((resultThumbnail) => {
-                //     if(_infoSize.Position !== undefined && resultThumbnail !== undefined && typeof(resultThumbnail.series) != "undefined"){
-                //         _seriesLen = resultThumbnail.series.length;
-                //         _this.seriesPagingClear();
-                //         _this.startBody();
-                //         _this.setCellThumbnail(resultThumbnail);
-                //     }
-                // });
-
-                // _this.getStructStudy(id).then((resultThumbnail) => {
-                //     if(_infoSize.Position !== undefined && resultThumbnail !== undefined && typeof(resultThumbnail.series) != "undefined"){
-                //         _seriesLen = resultThumbnail.series.length;
-                //         _this.seriesPagingClear();
-                //         _this.startBody();
-                //         _this.setCellThumbnail(resultThumbnail);
-                //     }
-                // }, (err) => {
-                //     console.log(err);
-                // });
-            // }
-
-
             /**
              * function getExamInfo
              * RequestObjectId로 의뢰이미지조회
              *
              * Create by 김민정 on 2019-01-03 오후 2:46
-             * @param {} 
+             * @param {}
              * @return {}
             **/
             getExambyId(id, resultThumbnail) {
@@ -280,9 +246,6 @@
                     case 13:
                         message = 'INVALID_MODIFICATION_ERR';
                         break;
-                    //     case FileError.INVALID_STATE_ERR:
-                    //         msg = 'INVALID_STATE_ERR';
-                    //         break;
                     default:
                         message = 'Unknown Error';
                         break;
@@ -301,27 +264,6 @@
                 let param = new Object();
                 param.detail = message;
                 this.dispatchEvent(new CustomEvent('toastEvent', param));
-            }
-
-            getStructStudy(studyObjectId) {
-                return new Promise(function (resolve, reject) {
-                    let url = baseUrl + '/exchange/worklist/struct/study/' + studyObjectId;
-                    fetch(url, {
-                        method: "GET",
-                        headers: {
-                            "Authorization": localStorage.getItem("jwt")
-                        }
-                    }).then(function (response) {
-                        if (response.ok && response.status == 200) {
-                            response.json().then(function (result) {
-                                resolve(result);
-                            });
-                        }
-                        else {
-                            reject("message : '" + response.status + "' " + response.statusText);
-                        }
-                    });
-                });
             }
 
             /**
@@ -350,13 +292,6 @@
 
             resizeCanvas() {
                 let canvas = _this.$.canvasImages;
-
-                // canvas size로 설정
-                // canvas.width = 300;
-                // canvas.height = 300;
-                //
-                // Info.Width = 300;
-                // Info.Height = 300;
 
                 // canvas size로 설정
                 canvas.width = _this.$.containerThumbnailImage.offsetWidth;
@@ -1040,7 +975,21 @@
                     }
                 }
                 else if (Info.EditMode === e_EditMode_SetPosition) {
-                    // _this.SetMouseDown_SetPosition(nX, nY, nBtn);
+                    _this.SetMouseDown_SetPosition(nX, nY, nBtn);
+                }
+
+                // Thumbnail Selected Series Info
+                if(Info.MouseDownCellIndex !== undefined && _infoSize.Position[Info.MouseDownCellIndex] !== undefined) {
+                    if(_infoSize.Position[Info.MouseDownCellIndex].Cell !== undefined) {
+
+                        let oViewImage = _infoSize.Position[Info.MouseDownCellIndex];
+                        let seriesId = _thumbnail.series[oViewImage.Cell.seriesIdx].seriesInstanceUID;
+
+                        let param = {};
+                        param.detail = seriesId;
+
+                        _this.dispatchEvent(new CustomEvent('setSelectedSeriesInfoEvent', param));
+                    }
                 }
             }
 
@@ -1241,68 +1190,69 @@
                 if (nBtn === 1) {
 
                     // Info.SetPosition.Drags = [];
-                    let bMatch = false;
+                    // let bMatch = false;
+                    //
+                    // for (let i = 0; i < Info.SetPosition.Buttons.length; i++) {
+                    //     let oBtn = Info.SetPosition.Buttons[i];
+                    //
+                    //     let nL = Info.SetPosition.Buttons[i].Position.X;
+                    //     let nT = Info.SetPosition.Buttons[i].Position.Y;
+                    //     let nW = Info.SetPosition.Buttons[i].Size.Width;
+                    //     let nH = Info.SetPosition.Buttons[i].Size.Height;
+                    //     let nR = nL + nW;
+                    //     let nB = nT + nH;
+                    //
+                    //     if (nX >= nL && nX <= nR && nY >= nT && nY <= nB) {
+                    //
+                    //         if (oBtn.Style === e_Button_Radio) {
+                    //             _this.setSetPositionCheck(oBtn.Command);
+                    //             _this.drawBoard();
+                    //         }
+                    //         else {
+                    //             _this.setSetPositionClear();
+                    //         }
+                    //
+                    //         bMatch = true;
+                    //         break;
+                    //     }// if
+                    // }// for i
 
-                    for (let i = 0; i < Info.SetPosition.Buttons.length; i++) {
-                        let oBtn = Info.SetPosition.Buttons[i];
+                    // if (!bMatch) {
+                    for (let i = 0; i < Info.SetPosition.Cells.length; i++) {
+                        let oCell = Info.SetPosition.Cells[i];
 
-                        let nL = Info.SetPosition.Buttons[i].Position.X;
-                        let nT = Info.SetPosition.Buttons[i].Position.Y;
-                        let nW = Info.SetPosition.Buttons[i].Size.Width;
-                        let nH = Info.SetPosition.Buttons[i].Size.Height;
+                        let nL = oCell.Position.X;
+                        let nT = oCell.Position.Y;
+                        let nW = oCell.Size.Width;
+                        let nH = oCell.Size.Height;
                         let nR = nL + nW;
                         let nB = nT + nH;
 
                         if (nX >= nL && nX <= nR && nY >= nT && nY <= nB) {
+                            // Info.SetPosition.Drags.push(i);
+                            // Info.MouseDragCellIndex = i;
+                            Info.MouseDownCellIndex = i;
 
-                            if (oBtn.Style === e_Button_Radio) {
-                                _this.setSetPositionCheck(oBtn.Command);
-                                _this.drawBoard();
-                            }
-                            else {
-                                _this.setSetPositionClear();
-                            }
+                            //if (oCell.Command != Info.SetPosition.Command) {
 
-                            bMatch = true;
+                            //    oCell.Command = "";
+                            //    oCell.SortNo = 0;
+
+                            //    var nSeq = GetMaxSortNo(Info.SetPosition.Command) + 1;
+
+                            //    oCell.Command = Info.SetPosition.Command;
+                            //    oCell.SortNo = nSeq;
+
+                            //}// if
+
+                            // _this.drawBoard();
+
+                            // bMatch = true;
                             break;
                         }// if
                     }// for i
-
-                    if (!bMatch) {
-                        for (let i = 0; i < Info.SetPosition.Cells.length; i++) {
-                            let oCell = Info.SetPosition.Cells[i];
-
-                            let nL = oCell.Position.X;
-                            let nT = oCell.Position.Y;
-                            let nW = oCell.Size.Width;
-                            let nH = oCell.Size.Height;
-                            let nR = nL + nW;
-                            let nB = nT + nH;
-
-                            if (nX >= nL && nX <= nR && nY >= nT && nY <= nB) {
-                                // Info.SetPosition.Drags.push(i);
-                                Info.MouseDragCellIndex = i;
-
-                                //if (oCell.Command != Info.SetPosition.Command) {
-
-                                //    oCell.Command = "";
-                                //    oCell.SortNo = 0;
-
-                                //    var nSeq = GetMaxSortNo(Info.SetPosition.Command) + 1;
-
-                                //    oCell.Command = Info.SetPosition.Command;
-                                //    oCell.SortNo = nSeq;
-
-                                //}// if
-
-                                _this.drawBoard();
-
-                                bMatch = true;
-                                break;
-                            }// if
-                        }// for i
-                    }
-                }// if
+                }
+                // }// if
             }
 
             SetMouseUp_SetPosition(nX, nY, nBtn) {
