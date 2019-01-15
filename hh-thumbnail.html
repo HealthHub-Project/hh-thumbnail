@@ -126,6 +126,7 @@
         };
 
         // let _firstStart = true;
+        // 셋팅 버튼 클릭 유무
         let _checkThumbnailCell;
 
         // 셀 정보
@@ -180,6 +181,9 @@
         let _workListObjId;
 
         let _thumbnailCell = false;
+
+        // thumbnail 영역
+        let g_thumbnailArea = {};
 
         class HhThumbnail extends Polymer.Element {
           static get is() { return 'hh-thumbnail'; }
@@ -462,10 +466,11 @@
             }
 
             InitializeEvent() {
-                window.addEventListener('mousemove', _this.OnMouseMove, false);
-                window.addEventListener('mousedown', _this.OnMouseDown, false);
-                window.addEventListener('mouseup', _this.OnMouseUp, false);
-                window.addEventListener('mousewheel', _this.OnMouseWheel, false);
+                _this.$.canvasImages.addEventListener('mousemove', _this.OnMouseMove, false);
+                _this.$.canvasImages.addEventListener('mousedown', _this.OnMouseDown, false);
+                _this.$.canvasImages.addEventListener('mouseup', _this.OnMouseUp, false);
+                _this.$.canvasImages.addEventListener('mousewheel', _this.OnMouseWheel, false);
+                _this.$.canvasImages.addEventListener('dblclick', _this.OnMouseDoubleClick, false);
             }
 
             drawBoard() {
@@ -974,23 +979,6 @@
                         _this.setCellThumbnail(_thumbnail);
                     }
                 }
-                else if (Info.EditMode === e_EditMode_SetPosition) {
-                    _this.SetMouseDown_SetPosition(nX, nY, nBtn);
-                }
-
-                // Thumbnail Selected Series Info
-                if(Info.MouseDownCellIndex !== undefined && _infoSize.Position[Info.MouseDownCellIndex] !== undefined) {
-                    if(_infoSize.Position[Info.MouseDownCellIndex].Cell !== undefined) {
-
-                        let oViewImage = _infoSize.Position[Info.MouseDownCellIndex];
-                        let seriesId = _thumbnail.series[oViewImage.Cell.seriesIdx].seriesInstanceUID;
-
-                        let param = {};
-                        param.detail = seriesId;
-
-                        _this.dispatchEvent(new CustomEvent('setSelectedSeriesInfoEvent', param));
-                    }
-                }
             }
 
             OnMouseUp(e) {
@@ -1026,6 +1014,40 @@
                 // console.log(bound);
 
                 _this.drawWheelImages(e, nX, nY);
+            }
+
+            OnMouseDoubleClick(e) {
+                let canvas = _this.$.canvasImages;
+                let bound = canvas.getBoundingClientRect();
+                let bw = 5;
+
+                let nX = (e.x - bound.left - bw) * (canvas.offsetWidth / (bound.width - bw * 2));
+                let nY = (e.y - bound.top - bw) * (canvas.offsetHeight / (bound.height - bw * 2));
+                let nBtn = 1;
+
+                if (Info.EditMode === e_EditMode_SetPosition) {
+                    _this.SetMouseDown_SetPosition(nX, nY, nBtn);
+                }
+
+                // Thumbnail Canvas에 이미지가 출력되었을때 실행
+                if(_arrImage.length > 0) {
+                    // Thumbnail Canvas영역 안에서만 실행
+                    if (nX >= g_thumbnailArea.nL && nX <= g_thumbnailArea.nR && nY >= g_thumbnailArea.nT && nY <= g_thumbnailArea.nB) {
+                        // Thumbnail Selected Series Info
+                        if(Info.MouseDownCellIndex !== undefined && _infoSize.Position[Info.MouseDownCellIndex] !== undefined) {
+                            if(_infoSize.Position[Info.MouseDownCellIndex].Cell !== undefined) {
+
+                                let oViewImage = _infoSize.Position[Info.MouseDownCellIndex];
+                                let seriesId = _thumbnail.series[oViewImage.Cell.seriesIdx].seriesInstanceUID;
+
+                                let param = {};
+                                param.detail = seriesId;
+
+                                _this.dispatchEvent(new CustomEvent('setSelectedSeriesInfoEvent', param));
+                            }
+                        }
+                    }
+                }
             }
 
             SetMouseMove_SelectCell(nX, nY, nBtn) {
@@ -1227,6 +1249,11 @@
                         let nH = oCell.Size.Height;
                         let nR = nL + nW;
                         let nB = nT + nH;
+
+                        g_thumbnailArea.nL = nL;
+                        g_thumbnailArea.nR = nR;
+                        g_thumbnailArea.nT = nT;
+                        g_thumbnailArea.nB = nB;
 
                         if (nX >= nL && nX <= nR && nY >= nT && nY <= nB) {
                             // Info.SetPosition.Drags.push(i);
