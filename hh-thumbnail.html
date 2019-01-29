@@ -187,7 +187,7 @@
           let g_thumbnailArea = {};
 
           // tab 이동시 설정되어있는 thumbnail position(seriesIdx, imageIdx)
-          let g_tabPos;
+          let g_tabPos = [];
 
           class HhThumbnail extends Polymer.Element {
               static get is() { return 'hh-thumbnail'; }
@@ -233,6 +233,7 @@
               }
 
               seriesPagingClear() {
+                  g_tabPos = [];
                   _arrImage = [];
                   _nextIdx = 0;
                   _nextImage = false;
@@ -307,7 +308,7 @@
                * @return {}
                **/
               tabStartBody() {
-                  if(g_tabPos === undefined) { // thumbnail tab이 아닐 경우 초기 thumbnail draw
+                  if(g_tabPos.length === 0) { // thumbnail tab이 아닐 경우 초기 thumbnail draw
                       _this.resizeCanvas();
                       _this.setCellThumbnail(_thumbnail);
                   }
@@ -677,22 +678,21 @@
 
               drawTabImagesRedraw() {
                   if(_bLayout){
-                      for (let series in _thumbnail.series) {
-                          let oPos = g_tabPos;
-
+                      for (let series in g_tabPos.length) {
+                          let oPos = _infoSize.Position[series];
                           // if(oPos !== undefined && _thumbnail.studies[0].series[oPos.Cell.seriesIdx] !== undefined){
                           if(oPos !== undefined && oPos.Cell !== null) {
                               let img = new Image();
-                              let seriesId = _thumbnail.series[g_tabPos.Cell.seriesIdx].seriesInstanceUID;
-                              let imageId = _thumbnail.series[g_tabPos.Cell.seriesIdx].image[g_tabPos.Cell.imageIdx].contentID;
+                              let seriesId = _thumbnail.series[oPos.Cell.seriesIdx].seriesInstanceUID;
+                              let imageId = _thumbnail.series[oPos.Cell.seriesIdx].image[oPos.Cell.imageIdx].contentID;
 
                               // 원본 이미지 크기
-                              let imgWidth = _thumbnail.series[g_tabPos.Cell.seriesIdx].image[g_tabPos.Cell.imageIdx].width;
-                              let imgHeight = _thumbnail.series[g_tabPos.Cell.seriesIdx].image[g_tabPos.Cell.imageIdx].height;
+                              let imgWidth = _thumbnail.series[oPos.Cell.seriesIdx].image[oPos.Cell.imageIdx].width;
+                              let imgHeight = _thumbnail.series[oPos.Cell.seriesIdx].image[oPos.Cell.imageIdx].height;
 
                               // cell 크기
-                              let maxWidth = g_tabPos.Size.Width;
-                              let maxHeight = g_tabPos.Size.Height;
+                              let maxWidth = oPos.Size.Width;
+                              let maxHeight = oPos.Size.Height;
 
                               // 사이즈 조정 이미지 크기
                               let resizeWidth;
@@ -739,15 +739,15 @@
                                               resolve(img);
                                           };
                                       }).then(value => {
-                                          Info.Context.drawImage(value, g_tabPos.Position.X+centerWidth, g_tabPos.Position.Y+centerHeight, resizeWidth-2, resizeHeight-2);
+                                          Info.Context.drawImage(value, oPos.Position.X+centerWidth, oPos.Position.Y+centerHeight, resizeWidth-2, resizeHeight-2);
 
-                                          let seriesDesc = _thumbnail.series[g_tabPos.Cell.seriesIdx].seriesDescription;
+                                          let seriesDesc = _thumbnail.series[oPos.Cell.seriesIdx].seriesDescription;
                                           if (seriesDesc === "hie_unknown") {
                                               seriesDesc = "-";
                                           }
 
                                           _this.resizeText(seriesDesc, resizeWidth);
-                                          Info.Context.fillText(seriesDesc, g_tabPos.Position.X+centerWidth, g_tabPos.Position.Y+centerHeight);
+                                          Info.Context.fillText(seriesDesc, oPos.Position.X+centerWidth, oPos.Position.Y+centerHeight);
                                       })
                                   }, _this.errorHandler);
                               }, _this.errorHandler);
@@ -763,10 +763,10 @@
                   if(_bLayout){
                       for (let series in _thumbnail.series) {
                           let oPos = _infoSize.Position[series];
-                          g_tabPos = oPos;
-
                           // if(oPos !== undefined && _thumbnail.studies[0].series[oPos.Cell.seriesIdx] !== undefined){
                           if(oPos !== undefined && oPos.Cell !== null) {
+                              g_tabPos.push(oPos);
+
                               let img = new Image();
                               let seriesId = _thumbnail.series[oPos.Cell.seriesIdx].seriesInstanceUID;
                               let imageId = _thumbnail.series[oPos.Cell.seriesIdx].image[oPos.Cell.imageIdx].contentID;
