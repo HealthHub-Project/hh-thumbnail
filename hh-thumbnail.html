@@ -211,14 +211,14 @@
               }
 
               /**
-               * function getExamInfo
-               * RequestObjectId로 의뢰이미지조회
+               * function setExamInfo
+               * RequestObjectId로 의뢰 이미지 조회 후 출력
                *
                * Create by 김민정 on 2019-01-03 오후 2:46
                * @param {}
                * @return {}
                **/
-              getExambyId(id, resultThumbnail) {
+              setExambyId(id, resultThumbnail) {
                   _workListObjId = id;
 
                   if(_infoSize.Position !== undefined && resultThumbnail !== undefined && typeof(resultThumbnail.series) != "undefined"){
@@ -293,6 +293,19 @@
                   _this.resizeCanvas();
 
                   _this.drawBoard();
+              }
+
+              /**
+               * function tabStartBody
+               * tab이동시 설정되있는 position대로 thumbnail redraw
+               *
+               * Create by 김민정 on 2019-01-28 오후 5:40
+               * @param {}
+               * @return {}
+               **/
+              tabStartBody() {
+                  _this.resizeCanvas();
+                  _this.setCellThumbnail(_thumbnail);
               }
 
               resizeCanvas() {
