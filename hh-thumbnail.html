@@ -307,7 +307,13 @@
                * @return {}
                **/
               tabStartBody() {
-                  _this.drawTabImagesRedraw();
+                  if(g_tabPos === undefined) { // thumbnail tab이 아닐 경우 초기 thumbnail draw
+                      _this.resizeCanvas();
+                      _this.setCellThumbnail(_thumbnail);
+                  }
+                  else { // thumbnail tab일 경우 설정되어있는 thumbnail position을 가지고 redraw
+                      _this.drawTabImagesRedraw();
+                  }
               }
 
               resizeCanvas() {
