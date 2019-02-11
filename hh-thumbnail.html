@@ -51,7 +51,7 @@
 
       /*setting button 사이즈 만큼 밑으로 내려가 center로 잡아줌*/
       #nextImages {
-        margin-bottom: 26px;
+        margin-bottom: 50px;
       }
 
       /*setting button*/
@@ -80,6 +80,12 @@
         height: 100%;
         width: 100%;
       }
+
+      paper-icon-button, #setSeriesDesc[disabled],
+      paper-icon-button, #setSeriesDesc[toggles][active] {
+        color: #2baab1;
+      }
+
     </style>
     <div class="container-column">
       <div class="flex-child">
@@ -92,6 +98,10 @@
           <paper-tooltip id="seriesDescTooltip" for="canvasImages" offset="0" animation-delay="0" animation-entry="scale-up-animation" animation-exit="fade-out-animation">{{seriesDesc}}</paper-tooltip>
         </div>
         <div class="settingContainer">
+          <div class="wrap-report-setting" on-click="drawText">
+            <paper-icon-button toggles id="setSeriesDesc" class="settingIcon" icon="vaadin:font"></paper-icon-button>
+            <paper-tooltip for="setSeriesDesc" offset="0" animation-delay="0" animation-entry="scale-up-animation" animation-exit="fade-out-animation">SeriesDescription On/Off</paper-tooltip>
+          </div>
           <div class="wrap-report-setting" on-click="setThumbnailCell">
             <paper-icon-button id="setThumbnailCell" class="settingIcon" icon="vaadin:grid-small"></paper-icon-button>
             <paper-tooltip for="setThumbnailCell" offset="0" animation-delay="0" animation-entry="scale-up-animation" animation-exit="fade-out-animation">Thumbnail Setting</paper-tooltip>
@@ -216,6 +226,14 @@
                   window.addEventListener('WebComponentsReady', e => {
                       _this.startBody();
                   });
+
+                  // series Description default setting
+                  _this.$.setSeriesDesc.active = true;
+                  // series Description on/off
+                  _this.$.setSeriesDesc.addEventListener("active-changed", () => {
+                      _this.drawImages();
+                  });
+
               }
 
               /**
@@ -741,7 +759,9 @@
                                           }
 
                                           _this.resizeText(seriesDesc, resizeWidth);
-                                          Info.Context.fillText(seriesDesc, oPos.Position.X+centerWidth, oPos.Position.Y+centerHeight);
+
+                                          _this.drawText(seriesDesc, oPos.Position.X + centerWidth, oPos.Position.Y + centerHeight);
+                                          // Info.Context.fillText(seriesDesc, oPos.Position.X+centerWidth, oPos.Position.Y+centerHeight);
                                       })
                                   }, _this.errorHandler);
                               }, _this.errorHandler);
@@ -826,7 +846,12 @@
                                           }
 
                                           _this.resizeText(seriesDesc, resizeWidth);
-                                          Info.Context.fillText(seriesDesc, oPos.Position.X+centerWidth, oPos.Position.Y+centerHeight);
+
+                                          if (_this.$.setSeriesDesc.active) {
+                                              _this.drawText(seriesDesc, oPos.Position.X + centerWidth, oPos.Position.Y + centerHeight);
+                                              // Info.Context.fillText(seriesDesc, oPos.Position.X+centerWidth, oPos.Position.Y+centerHeight);
+                                          }
+
                                       })
                                   }, _this.errorHandler);
                               }, _this.errorHandler);
@@ -1231,7 +1256,7 @@
 
                       if (nX >= nL && nX <= nR && nY >= nT && nY <= nB) {
                           // series Desc Tooltip
-                          _this.SetMouseOver_SetTooltip(nSelected);
+                          _this.SetMouseOver_SetTooltip(_nextIdx+nSelected);
 
                           bMatch = true;
                       }// if
@@ -1253,7 +1278,7 @@
                               Info.MouseDragCellIndex = i;
 
                               // series Desc Tooltip
-                              _this.SetMouseOver_SetTooltip(i);
+                              _this.SetMouseOver_SetTooltip(_nextIdx+i);
 
                               bMatch = true;
                               // break;
@@ -1497,6 +1522,20 @@
 
                   param.detail = false;
                   _this.getThumbnailCell(param.detail);
+              }
+
+              /**
+               * function drawText
+               * Series Description Text On/Off 설정
+               *
+               * Create by 김민정 on 2019-02-11 오전 11:17
+               * @param {}
+               * @return {}
+               **/
+              drawText(seriesDesc, width, height) {
+                  if (_this.$.setSeriesDesc.active) {
+                      Info.Context.fillText(seriesDesc, width, height);
+                  }
               }
           }
 
