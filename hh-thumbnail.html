@@ -89,6 +89,7 @@
         </div>
         <div id="containerThumbnailImage" class="container-thumbnail-image">
           <canvas id="canvasImages" class="canvasImage"></canvas>
+          <paper-tooltip id="seriesDescTooltip" for="canvasImages" offset="0" animation-delay="0" animation-entry="scale-up-animation" animation-exit="fade-out-animation">{{seriesDesc}}</paper-tooltip>
         </div>
         <div class="settingContainer">
           <div class="wrap-report-setting" on-click="setThumbnailCell">
@@ -196,6 +197,10 @@
                       prop1: {
                           type: String,
                           value: 'hh-thumbnail'
+                      },
+                      seriesDesc: {
+                          type: String,
+                          value: ""
                       }
                   };
               }
@@ -333,7 +338,6 @@
               }
 
               InitializeFunction() {
-
                   // padLeft
                   if (!String.prototype.padLeft) {
                       String.prototype.padLeft = function padLeft(nLength, sPadString) {
@@ -357,13 +361,9 @@
               }
 
               InitializeInfo() {
-
                   let canvas = _this.$.canvasImages;
 
                   Info.Context = canvas.getContext("2d");
-
-                  // Info.Width = window.innerWidth;
-                  // Info.Height = window.innerHeight;
 
                   Info.Width = _this.$.containerThumbnailImage.offsetWidth;
                   Info.Height = _this.$.containerThumbnailImage.offsetHeight;
@@ -379,7 +379,6 @@
               }
 
               InitializeInfoSelectCell() {
-
                   Info.SelectCell = function () { };
 
                   Info.SelectCell.Rows = 10;
@@ -400,7 +399,6 @@
               }
 
               InitializeInfoSetPosition() {
-
                   let obj = function () { };
 
                   obj.PaddingWidth = 3;
@@ -462,7 +460,6 @@
               }
 
               setSetPositionCheck(sCommand) {
-
                   for (let i = 0; i < Info.SetPosition.Buttons.length; i++) {
 
                       let obj = Info.SetPosition.Buttons[i];
@@ -478,7 +475,6 @@
               }
 
               setSetPositionClear() {
-
                   for (let i = 0; i < Info.SetPosition.Cells.length; i++) {
                       let obj = Info.SetPosition.Cells[i];
 
@@ -494,10 +490,10 @@
                   _this.$.canvasImages.addEventListener('mouseup', _this.OnMouseUp, false);
                   _this.$.canvasImages.addEventListener('mousewheel', _this.OnMouseWheel, false);
                   _this.$.canvasImages.addEventListener('dblclick', _this.OnMouseDoubleClick, false);
+                  _this.$.canvasImages.addEventListener('mouseover', _this.OnMouseOver, false);
               }
 
               drawBoard() {
-
                   Info.Context.clearRect(0, 0, Info.Width, Info.Height);
                   Info.Context.fillStyle = "rgba(0,0,0,0.8)";
 
@@ -516,7 +512,6 @@
               }
 
               drawSelectCell() {
-
                   let nBorderWidth = 1;
 
                   for (let i = 0; i < Info.SelectCell.Cells.length; i++) {
@@ -568,7 +563,6 @@
               }
 
               drawSetPosition() {
-
                   _infoSize.Position = [];
 
                   // Draw Cells
@@ -925,7 +919,6 @@
               }
 
               setSelectCellBounds() {
-
                   if (Info.Width < 1 || Info.Height < 1) {
                       return;
                   }
@@ -968,7 +961,6 @@
               }
 
               setSetPositionCellBounds() {
-
                   if (Info.Width < 1 || Info.Height < 1) {
                       return;
                   }
@@ -1010,7 +1002,6 @@
               }
 
               GetButtonsHeight() {
-
                   let nHeight = 0;
 
                   for (let i = 0; i < Info.SetPosition.Buttons.length; i++) {
@@ -1041,7 +1032,6 @@
               }
 
               OnMouseMove(e) {
-
                   let canvas = _this.$.canvasImages;
                   let bound = canvas.getBoundingClientRect();
                   let bw = 5;
@@ -1049,8 +1039,6 @@
                   let nX = (e.x - bound.left - bw) * (canvas.offsetWidth / (bound.width - bw * 2));
                   let nY = (e.y - bound.top - bw) * (canvas.offsetHeight / (bound.height - bw * 2));
 
-                  // let nX = e.x - e.target.offsetLeft;
-                  // let nY = e.y - e.target.offsetTop;
                   let nBtn = e.buttons;
 
                   if (Info.EditMode === e_EditMode_SelectCell) {
@@ -1065,9 +1053,6 @@
               }
 
               OnMouseDown(e) {
-                  // let nX = e.x - e.target.offsetLeft;
-                  // let nY = e.y - e.target.offsetTop;
-
                   let canvas = _this.$.canvasImages;
                   let bound = canvas.getBoundingClientRect();
                   let bw = 5;
@@ -1089,9 +1074,6 @@
               }
 
               OnMouseUp(e) {
-                  // let nX = e.x - e.target.offsetLeft;
-                  // let nY = e.y - e.target.offsetTop;
-
                   let canvas = _this.$.canvasImages;
                   let bound = canvas.getBoundingClientRect();
                   let bw = 5;
@@ -1108,17 +1090,12 @@
               }
 
               OnMouseWheel(e) {
-                  // let nX = e.x - e.target.offsetLeft;
-                  // let nY = e.y - e.target.offsetTop;
-
                   let canvas = _this.$.canvasImages;
                   let bound = canvas.getBoundingClientRect();
                   let bw = 5;
 
                   let nX = (e.x - bound.left - bw) * (canvas.offsetWidth / (bound.width - bw * 2));
                   let nY = (e.y - bound.top - bw) * (canvas.offsetHeight / (bound.height - bw * 2));
-
-                  // console.log(bound);
 
                   _this.drawWheelImages(e, nX, nY);
               }
@@ -1157,17 +1134,31 @@
                   }
               }
 
+              OnMouseOver(e) {
+                  let canvas = _this.$.canvasImages;
+                  let bound = canvas.getBoundingClientRect();
+                  let bw = 5;
+
+                  let nX = (e.x - bound.left - bw) * (canvas.offsetWidth / (bound.width - bw * 2));
+                  let nY = (e.y - bound.top - bw) * (canvas.offsetHeight / (bound.height - bw * 2));
+
+                  let nBtn = e.buttons;
+
+                  _this.SetMouseMove_SetPosition(nX, nY, nBtn);
+              }
+
               SetMouseMove_SelectCell(nX, nY, nBtn) {
+                  _this.$.seriesDescTooltip.playAnimation("exit");
 
                   let bRedraw = false;
                   let bMatch = false;
-                  let nSelIndex = Info.SelectCell.SelectedIndex;
+                  let nSelected = Info.SelectCell.SelectedIndex;
 
-                  if (nSelIndex > -1 && Info.SelectCell.Cells.length > nSelIndex) {
-                      let nL = Info.SelectCell.Cells[nSelIndex].Position.X;
-                      let nT = Info.SelectCell.Cells[nSelIndex].Position.Y;
-                      let nW = Info.SelectCell.Cells[nSelIndex].Size.Width;
-                      let nH = Info.SelectCell.Cells[nSelIndex].Size.Height;
+                  if (nSelected > -1 && Info.SelectCell.Cells.length > nSelected) {
+                      let nL = Info.SelectCell.Cells[nSelected].Position.X;
+                      let nT = Info.SelectCell.Cells[nSelected].Position.Y;
+                      let nW = Info.SelectCell.Cells[nSelected].Size.Width;
+                      let nH = Info.SelectCell.Cells[nSelected].Size.Height;
                       let nR = nL + nW;
                       let nB = nT + nH;
 
@@ -1180,8 +1171,6 @@
                       Info.SelectCell.SelectedIndex = -1;
                       Info.SelectCell.SelectedRow = -1;
                       Info.SelectCell.SelectedColumn = -1;
-
-                      // console.log(Info.SelectCell.SelectedIndex);
 
                       for (let i = 0; i < Info.SelectCell.Cells.length; i++) {
 
@@ -1228,28 +1217,31 @@
               }
 
               SetMouseMove_SetPosition(nX, nY, nBtn) {
-                  // if (nBtn === 1) {
                   let bRedraw = false;
                   let bMatch = false;
-                  let nSelIndex = Info.MouseDragCellIndex;
+                  let nSelected = Info.MouseDragCellIndex;
 
-                  if (nSelIndex > -1 && Info.SetPosition.Cells.length > nSelIndex) {
-                      let nL = Info.SetPosition.Cells[nSelIndex].Position.X;
-                      let nT = Info.SetPosition.Cells[nSelIndex].Position.Y;
-                      let nW = Info.SetPosition.Cells[nSelIndex].Size.Width;
-                      let nH = Info.SetPosition.Cells[nSelIndex].Size.Height;
+                  if (nSelected > -1 && Info.SetPosition.Cells.length > nSelected) {
+                      let nL = Info.SetPosition.Cells[nSelected].Position.X;
+                      let nT = Info.SetPosition.Cells[nSelected].Position.Y;
+                      let nW = Info.SetPosition.Cells[nSelected].Size.Width;
+                      let nH = Info.SetPosition.Cells[nSelected].Size.Height;
                       let nR = nL + nW;
                       let nB = nT + nH;
 
                       if (nX >= nL && nX <= nR && nY >= nT && nY <= nB) {
+                          // series Desc Tooltip
+                          _this.SetMouseOver_SetTooltip(nSelected);
 
                           bMatch = true;
                       }// if
+                      else {
+                          _this.$.seriesDescTooltip.playAnimation("exit");
+                      }
                   }
 
                   if (!bMatch) {
                       for (let i = 0; i < Info.SetPosition.Cells.length; i++) {
-
                           let nL = Info.SetPosition.Cells[i].Position.X;
                           let nT = Info.SetPosition.Cells[i].Position.Y;
                           let nW = Info.SetPosition.Cells[i].Size.Width;
@@ -1257,35 +1249,18 @@
                           let nR = nL + nW;
                           let nB = nT + nH;
 
-                          // Info.MouseDragCellIndex = i;
-                          // console.log(Info.MouseDragCellIndex);
-
                           if (nX >= nL && nX <= nR && nY >= nT && nY <= nB) {
                               Info.MouseDragCellIndex = i;
-                              // console.log(nL, nT, nW, nH);
-                              // console.log(Info.MouseDragCellIndex);
-                              //
-                              // if (Info.SetPosition.Drags.includes(i)) {
-                              //     for (let j = Info.SetPosition.Drags.length - 1; j >= 0; j--) {
-                              //         let nIndex = Info.SetPosition.Drags[j];
-                              //
-                              //         if (nIndex === i) {
-                              //             break;
-                              //         }
-                              //         else {
-                              //             Info.SetPosition.Drags.pop();
-                              //         }
-                              //     }
-                              // }
-                              // else {
-                              //     Info.SetPosition.Drags.push(i);
-                              // }
-                              //
+
+                              // series Desc Tooltip
+                              _this.SetMouseOver_SetTooltip(i);
+
                               bMatch = true;
-                              // bRedraw = true;
-                              //
                               // break;
                           }// if
+                          else {
+                              _this.$.seriesDescTooltip.playAnimation("exit");
+                          }
                       }// for i
 
                   }// if
@@ -1293,8 +1268,6 @@
                   if (bRedraw) {
                       _this.drawBoard();
                   }
-
-                  // }// if (nBtn == 1)
               }
 
               SetMouseDown_SelectCell(nX, nY, nBtn) {
@@ -1302,9 +1275,6 @@
                       _this.SetMouseMove_SelectCell(nX, nY, nBtn);
 
                       if (Info.SelectCell.SelectedRow > -1 && Info.SelectCell.SelectedColumn > -1) {
-
-                          // let sMsg = "Select : ".concat(Info.SelectCell.SelectedRow + 1, "X", Info.SelectCell.SelectedColumn + 1);
-                          // alert(sMsg);
 
                           Info.EditMode = e_EditMode_SetPosition;
                           Info.SetPosition.Rows = Info.SelectCell.SelectedRow + 1;
@@ -1317,36 +1287,6 @@
 
               SetMouseDown_SetPosition(nX, nY, nBtn) {
                   if (nBtn === 1) {
-
-                      // Info.SetPosition.Drags = [];
-                      // let bMatch = false;
-                      //
-                      // for (let i = 0; i < Info.SetPosition.Buttons.length; i++) {
-                      //     let oBtn = Info.SetPosition.Buttons[i];
-                      //
-                      //     let nL = Info.SetPosition.Buttons[i].Position.X;
-                      //     let nT = Info.SetPosition.Buttons[i].Position.Y;
-                      //     let nW = Info.SetPosition.Buttons[i].Size.Width;
-                      //     let nH = Info.SetPosition.Buttons[i].Size.Height;
-                      //     let nR = nL + nW;
-                      //     let nB = nT + nH;
-                      //
-                      //     if (nX >= nL && nX <= nR && nY >= nT && nY <= nB) {
-                      //
-                      //         if (oBtn.Style === e_Button_Radio) {
-                      //             _this.setSetPositionCheck(oBtn.Command);
-                      //             _this.drawBoard();
-                      //         }
-                      //         else {
-                      //             _this.setSetPositionClear();
-                      //         }
-                      //
-                      //         bMatch = true;
-                      //         break;
-                      //     }// if
-                      // }// for i
-
-                      // if (!bMatch) {
                       for (let i = 0; i < Info.SetPosition.Cells.length; i++) {
                           let oCell = Info.SetPosition.Cells[i];
 
@@ -1363,30 +1303,11 @@
                           g_thumbnailArea.nB = nB;
 
                           if (nX >= nL && nX <= nR && nY >= nT && nY <= nB) {
-                              // Info.SetPosition.Drags.push(i);
-                              // Info.MouseDragCellIndex = i;
                               Info.MouseDownCellIndex = i;
-
-                              //if (oCell.Command != Info.SetPosition.Command) {
-
-                              //    oCell.Command = "";
-                              //    oCell.SortNo = 0;
-
-                              //    var nSeq = GetMaxSortNo(Info.SetPosition.Command) + 1;
-
-                              //    oCell.Command = Info.SetPosition.Command;
-                              //    oCell.SortNo = nSeq;
-
-                              //}// if
-
-                              // _this.drawBoard();
-
-                              // bMatch = true;
                               break;
                           }// if
                       }// for i
                   }
-                  // }// if
               }
 
               SetMouseUp_SetPosition(nX, nY, nBtn) {
@@ -1411,8 +1332,22 @@
 
               }
 
-              GetMaxSortNo(sCommand) {
+              SetMouseOver_SetTooltip(nSelected) {
+                  if(_thumbnail.series !== undefined && _thumbnail.series[nSelected] !== undefined) {
+                      _this.seriesDesc = _thumbnail.series[nSelected].seriesDescription;
 
+                      if (_this.seriesDesc === "hie_unknown") {
+                          _this.seriesDesc = "-";
+                      }
+
+                      _this.$.seriesDescTooltip.playAnimation("entry");
+                  }
+                  else {
+                      _this.$.seriesDescTooltip.playAnimation("exit");
+                  }
+              }
+
+              GetMaxSortNo(sCommand) {
                   let asCommands = ["NEW", "OLD", "FIRST"];
                   let obj = [];
 
@@ -1447,10 +1382,11 @@
                   }// for i
 
                   return obj[sCommand].length;
-              }// if
+              }
 
               nextImages() {
                   if(_nextImage){
+
                       _prevImage = true;
 
                       let nPos = 0;
