@@ -95,7 +95,8 @@
         </div>
         <div id="containerThumbnailImage" class="container-thumbnail-image">
           <canvas id="canvasImages" class="canvasImage"></canvas>
-          <paper-tooltip id="seriesDescTooltip" for="canvasImages" offset="0" animation-delay="0" animation-entry="scale-up-animation" animation-exit="fade-out-animation">{{seriesDesc}}</paper-tooltip>
+          <!--<paper-tooltip id="seriesDescTooltip" for="canvasImages" offset="0" animation-delay="0" animation-entry="scale-up-animation" animation-exit="fade-out-animation">{{seriesDesc}}</paper-tooltip>-->
+          <paper-tooltip id="seriesDescTooltip" for="canvasImages">{{seriesDesc}}</paper-tooltip>
         </div>
         <div class="settingContainer">
           <div class="wrap-report-setting" on-click="drawText">
