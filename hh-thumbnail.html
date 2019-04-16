@@ -101,7 +101,7 @@
           <paper-tooltip id="seriesDescTooltip" for="canvasImages">{{seriesDesc}}</paper-tooltip>
         </div>
         <div class="settingContainer">
-          <div class="wrap-report-setting" on-click="drawText">
+          <div class="wrap-report-setting">
             <paper-icon-button toggles id="setSeriesDesc" class="settingIcon" icon="vaadin:font"></paper-icon-button>
             <paper-tooltip for="setSeriesDesc" offset="0" animation-delay="0" animation-entry="scale-up-animation" animation-exit="fade-out-animation">SeriesDescription On/Off</paper-tooltip>
           </div>
@@ -615,8 +615,8 @@
 
                       if (_infoSize.Position.length > nPos && series !== undefined) {
                           oCell.seriesIdx = parseInt(series);
-                          oCell.imageIdx = 0;
                           oCell.lastimageIdx = resultThumbnail.series[series].image.length;
+                          oCell.imageIdx = parseInt((oCell.lastimageIdx/2)-1);
 
                           let objImg = {};
 
@@ -645,8 +645,9 @@
                           _nextImage = true;
 
                           oCell.seriesIdx = parseInt(series);
-                          oCell.imageIdx = 0;
                           oCell.lastimageIdx = resultThumbnail.series[series].image.length;
+                          oCell.imageIdx = parseInt((oCell.lastimageIdx/2)-1);
+                          // oCell.imageIdx = 0;
 
 
                           let objImg = {};
@@ -693,6 +694,7 @@
 
               drawTabImagesRedraw() {
                   if(_bLayout){
+
                       for (let series in g_tabPos.length) {
                           let oPos = _infoSize.Position[series];
                           // if(oPos !== undefined && _thumbnail.studies[0].series[oPos.Cell.seriesIdx] !== undefined){
@@ -757,14 +759,18 @@
                                           Info.Context.drawImage(value, oPos.Position.X+centerWidth, oPos.Position.Y+centerHeight, resizeWidth-2, resizeHeight-2);
 
                                           let seriesDesc = _thumbnail.series[oPos.Cell.seriesIdx].seriesDescription;
-                                          if (seriesDesc === "hie_unknown") {
-                                              seriesDesc = "-";
+                                          let imgTotalCnt = _thumbnail.series[oPos.Cell.seriesIdx].image.length;
+                                          let imgCnt = oPos.Cell.imageIdx;
+                                          let cntInfo = imgCnt + "/" + imgTotalCnt;
+
+                                          if (seriesDesc === "hie_unknown" || !seriesDesc) {
+                                              seriesDesc = "N/A";
                                           }
 
-                                          _this.resizeText(seriesDesc, resizeWidth);
+                                          seriesDesc = _this.trim(seriesDesc);
 
-                                          _this.drawText(seriesDesc, oPos.Position.X + centerWidth, oPos.Position.Y + centerHeight);
-                                          // Info.Context.fillText(seriesDesc, oPos.Position.X+centerWidth, oPos.Position.Y+centerHeight);
+                                          _this.drawTextDesc(seriesDesc, oPos.Position.X + 5, oPos.Position.Y + 5, maxWidth - 10, 1.0);
+                                          _this.drawTextCnt(cntInfo, oPos.Position.X + 5,oPos.Position.Y + maxHeight - 2);
                                       })
                                   }, _this.errorHandler);
                               }, _this.errorHandler);
@@ -778,6 +784,9 @@
 
               drawImages() {
                   if(_bLayout){
+
+                      _this.drawBoard();
+
                       for (let series in _thumbnail.series) {
                           let oPos = _infoSize.Position[series];
                           // if(oPos !== undefined && _thumbnail.studies[0].series[oPos.Cell.seriesIdx] !== undefined){
@@ -824,6 +833,8 @@
                               // 이미지 중앙에 위치
                               let centerWidth = (maxWidth-resizeWidth)/2;
                               let centerHeight = (maxHeight-resizeHeight)/2;
+                              let testHeight = (maxHeight-resizeHeight);
+
 
                               if(centerWidth===0){
                                   centerWidth=2;
@@ -844,17 +855,20 @@
                                           Info.Context.drawImage(value, oPos.Position.X+centerWidth, oPos.Position.Y+centerHeight, resizeWidth-2, resizeHeight-2);
 
                                           let seriesDesc = _thumbnail.series[oPos.Cell.seriesIdx].seriesDescription;
-                                          if (seriesDesc === "hie_unknown") {
-                                              seriesDesc = "-";
+                                          let imgTotalCnt = _thumbnail.series[oPos.Cell.seriesIdx].image.length;
+                                          let imgCnt = oPos.Cell.imageIdx + 1;
+                                          let cntInfo = imgCnt + "/" + imgTotalCnt;
+
+                                          if (seriesDesc === "hie_unknown" || !seriesDesc) {
+                                              seriesDesc = "N/A";
                                           }
 
-                                          _this.resizeText(seriesDesc, resizeWidth);
+                                          seriesDesc = _this.trim(seriesDesc);
 
                                           if (_this.$.setSeriesDesc.active) {
-                                              _this.drawText(seriesDesc, oPos.Position.X + centerWidth, oPos.Position.Y + centerHeight);
-                                              // Info.Context.fillText(seriesDesc, oPos.Position.X+centerWidth, oPos.Position.Y+centerHeight);
+                                              _this.drawTextDesc(seriesDesc, oPos.Position.X + 5, oPos.Position.Y + 5, maxWidth - 10, 1.0);
+                                              _this.drawTextCnt(cntInfo, oPos.Position.X + 5,oPos.Position.Y + maxHeight - 2);
                                           }
-
                                       })
                                   }, _this.errorHandler);
                               }, _this.errorHandler);
@@ -866,6 +880,17 @@
                   }
               }
 
+              /**
+               * 문자열 앞/뒤 공백 제거
+               *
+               * Create by joohyukjung on 16/04/2019 4:52 PM
+               * @param {}
+               * @return {}
+               **/
+              trim(s) {
+                  s += ''; // 숫자라도 문자열로 변환
+                  return s.replace(/^\s*|\s*$/g, '');
+              }
               /**
                * function resizeText
                * font Size 조정
@@ -887,6 +912,61 @@
                       Info.Context.font = "bold " + size + "px Arial";
                   }while(Info.Context.measureText(seriesDesc).width>resizeWidth);
               }
+
+              /**
+               * multi line text(series description)
+               * canvas에 text(series description)를 여러줄로 표현
+               *
+               * Create by joohyukjung on 16/04/2019 4:54 PM
+               * @param {}
+               * @return {}
+               **/
+              drawTextDesc(text, x, y, fieldWidth, spacing) {
+                  Info.Context.beginPath();
+                  Info.Context.fillStyle = "white";
+                  Info.Context.textAlign = "left";
+                  Info.Context.textBaseline = "top";
+                  Info.Context.font = "15px Consolas";
+
+                  var line = "";
+                  var fontSize = parseFloat(Info.Context.font);
+                  var currentY = y;
+                  // Info.Context.textBaseline = "top";
+                  for(var i=0; i<text.length; i++) {
+                      var tempLine = line + text[i];
+                      var tempWidth = Info.Context.measureText(tempLine).width;
+
+                      if (tempWidth < fieldWidth && text[i] != '\n') {
+                          line = tempLine;
+                      }
+                      else {
+                          Info.Context.fillText(line, x, currentY);
+                          if(text[i] != '\n') line = text[i];
+                          else line = "";
+                          currentY += fontSize*spacing;
+                      }
+                  }
+                  Info.Context.fillText(line, x, currentY);
+                  Info.Context.rect(x, y, fieldWidth, currentY-y+fontSize*spacing);
+                  // Info.Context.stroke();
+              }
+
+              /**
+               * 이미지 수 / 시리즈 수 표시
+               *
+               * Create by joohyukjung on 16/04/2019 6:35 PM
+               * @param {}
+               * @return {}
+               **/
+              drawTextCnt(text, x, y) {
+                  Info.Context.beginPath();
+                  Info.Context.fillStyle = "white";
+                  Info.Context.textAlign = "left";
+                  Info.Context.textBaseline = "bottom";
+                  Info.Context.font = "13px Consolas";
+                  Info.Context.fillText(text, x, y);
+              }
+
 
               // Mouse Wheel Event Thumbnail Image
               drawWheelImages(e, nX, nY){
@@ -1525,20 +1605,6 @@
 
                   param.detail = false;
                   _this.getThumbnailCell(param.detail);
-              }
-
-              /**
-               * function drawText
-               * Series Description Text On/Off 설정
-               *
-               * Create by 김민정 on 2019-02-11 오전 11:17
-               * @param {}
-               * @return {}
-               **/
-              drawText(seriesDesc, width, height) {
-                  if (_this.$.setSeriesDesc.active) {
-                      Info.Context.fillText(seriesDesc, width, height);
-                  }
               }
           }
 
