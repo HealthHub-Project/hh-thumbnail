@@ -1209,6 +1209,10 @@
               }
 
               OnMouseDoubleClick(e) {
+                  // let nSelected = Info.MouseDragCellIndex;
+                  // let oPos = _infoSize.Position[nSelected];
+                  // console.log(oPos.Cell.imageIdx+1);
+
                   let canvas = _this.$.canvasImages;
                   let bound = canvas.getBoundingClientRect();
                   let bw = 5;
@@ -1232,8 +1236,13 @@
                                   let oViewImage = _infoSize.Position[Info.MouseDownCellIndex];
                                   let seriesId = _thumbnail.series[oViewImage.Cell.seriesIdx].seriesInstanceUID;
 
+                                  let imageIndex = oViewImage.Cell.imageIdx+1;
+
                                   let param = {};
-                                  param.detail = seriesId;
+                                  param.detail = {
+                                      "seriesId" : seriesId,
+                                      "imageIndex" : imageIndex
+                                  };
 
                                   _this.dispatchEvent(new CustomEvent('setSelectedSeriesInfoEvent', param));
                               }
