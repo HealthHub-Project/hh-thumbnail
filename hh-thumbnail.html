@@ -616,7 +616,12 @@
                       if (_infoSize.Position.length > nPos && series !== undefined) {
                           oCell.seriesIdx = parseInt(series);
                           oCell.lastimageIdx = resultThumbnail.series[series].image.length;
-                          oCell.imageIdx = parseInt((oCell.lastimageIdx/2)-1);
+                          if(resultThumbnail.series[series].fileType == "KeyImage") {
+                              oCell.imageIdx = 0;
+                          } else {
+                              oCell.imageIdx = parseInt((oCell.lastimageIdx/2)-1);
+                          }
+
 
                           let objImg = {};
 
@@ -646,8 +651,11 @@
 
                           oCell.seriesIdx = parseInt(series);
                           oCell.lastimageIdx = resultThumbnail.series[series].image.length;
-                          oCell.imageIdx = parseInt((oCell.lastimageIdx/2)-1);
-                          // oCell.imageIdx = 0;
+                          if(resultThumbnail.series[series].fileType == "KeyImage") {
+                              oCell.imageIdx = 0;
+                          } else {
+                              oCell.imageIdx = parseInt((oCell.lastimageIdx/2)-1);
+                          }
 
 
                           let objImg = {};
@@ -764,13 +772,20 @@
                                           let cntInfo = imgCnt + "/" + imgTotalCnt;
 
                                           if (seriesDesc === "hie_unknown" || !seriesDesc) {
-                                              seriesDesc = "N/A";
+                                              if (fileType == "KeyImage") {
+                                                  seriesDesc = "Key";
+                                              } else {
+                                                  seriesDesc = "N/A";
+                                              }
                                           }
 
                                           seriesDesc = _this.trim(seriesDesc);
-
-                                          _this.drawTextDesc(seriesDesc, oPos.Position.X + 5, oPos.Position.Y + 5, maxWidth - 10, 1.0);
-                                          _this.drawTextCnt(cntInfo, oPos.Position.X + 5,oPos.Position.Y + maxHeight - 2);
+                                          if (fileType == "KeyImage") {
+                                              _this.drawTextDesc(seriesDesc, oPos.Position.X + 5, oPos.Position.Y + 5, maxWidth - 10, 1.0, "red");
+                                          } else {
+                                              _this.drawTextDesc(seriesDesc, oPos.Position.X + 5, oPos.Position.Y + 5, maxWidth - 10, 1.0, "white");
+                                          }
+                                          _this.drawTextCnt(cntInfo, oPos.Position.X + 5, oPos.Position.Y + maxHeight - 2);
                                       })
                                   }, _this.errorHandler);
                               }, _this.errorHandler);
@@ -784,9 +799,7 @@
 
               drawImages() {
                   if(_bLayout){
-
                       _this.drawBoard();
-
                       for (let series in _thumbnail.series) {
                           let oPos = _infoSize.Position[series];
                           // if(oPos !== undefined && _thumbnail.studies[0].series[oPos.Cell.seriesIdx] !== undefined){
@@ -794,7 +807,8 @@
                               g_tabPos.push(oPos);
 
                               let img = new Image();
-                              let seriesId = _thumbnail.series[oPos.Cell.seriesIdx].seriesInstanceUID;
+                              // let seriesId = _thumbnail.series[oPos.Cell.seriesIdx].seriesInstanceUID;
+                              let seriesId = _thumbnail.series[oPos.Cell.seriesIdx].image[oPos.Cell.imageIdx].seriesInstanceUID;
                               let imageId = _thumbnail.series[oPos.Cell.seriesIdx].image[oPos.Cell.imageIdx].contentID;
 
                               // 원본 이미지 크기
@@ -858,16 +872,26 @@
                                           let imgTotalCnt = _thumbnail.series[oPos.Cell.seriesIdx].image.length;
                                           let imgCnt = oPos.Cell.imageIdx + 1;
                                           let cntInfo = imgCnt + "/" + imgTotalCnt;
+                                          let fileType = _thumbnail.series[oPos.Cell.seriesIdx].fileType;
+
 
                                           if (seriesDesc === "hie_unknown" || !seriesDesc) {
-                                              seriesDesc = "N/A";
+                                              if (fileType == "KeyImage") {
+                                                  seriesDesc = "Key";
+                                              } else {
+                                                  seriesDesc = "N/A";
+                                              }
                                           }
 
                                           seriesDesc = _this.trim(seriesDesc);
 
                                           if (_this.$.setSeriesDesc.active) {
-                                              _this.drawTextDesc(seriesDesc, oPos.Position.X + 5, oPos.Position.Y + 5, maxWidth - 10, 1.0);
-                                              _this.drawTextCnt(cntInfo, oPos.Position.X + 5,oPos.Position.Y + maxHeight - 2);
+                                              if (fileType == "KeyImage") {
+                                                  _this.drawTextDesc(seriesDesc, oPos.Position.X + 5, oPos.Position.Y + 5, maxWidth - 10, 1.0, "red");
+                                              } else {
+                                                  _this.drawTextDesc(seriesDesc, oPos.Position.X + 5, oPos.Position.Y + 5, maxWidth - 10, 1.0, "white");
+                                              }
+                                              _this.drawTextCnt(cntInfo, oPos.Position.X + 5, oPos.Position.Y + maxHeight - 2);
                                           }
                                       })
                                   }, _this.errorHandler);
@@ -921,9 +945,9 @@
                * @param {}
                * @return {}
                **/
-              drawTextDesc(text, x, y, fieldWidth, spacing) {
+              drawTextDesc(text, x, y, fieldWidth, spacing, color) {
                   Info.Context.beginPath();
-                  Info.Context.fillStyle = "white";
+                  Info.Context.fillStyle = color;
                   Info.Context.textAlign = "left";
                   Info.Context.textBaseline = "top";
                   Info.Context.font = "15px Consolas";
@@ -1230,20 +1254,16 @@
                       // Thumbnail Canvas영역 안에서만 실행
                       if (nX >= g_thumbnailArea.nL && nX <= g_thumbnailArea.nR && nY >= g_thumbnailArea.nT && nY <= g_thumbnailArea.nB) {
                           // Thumbnail Selected Series Info
-                          if(Info.MouseDownCellIndex !== undefined && _infoSize.Position[Info.MouseDownCellIndex] !== undefined) {
-                              if(_infoSize.Position[Info.MouseDownCellIndex].Cell !== undefined) {
-
+                          if (Info.MouseDownCellIndex !== undefined && _infoSize.Position[Info.MouseDownCellIndex] !== undefined) {
+                              if (_infoSize.Position[Info.MouseDownCellIndex].Cell !== undefined) {
                                   let oViewImage = _infoSize.Position[Info.MouseDownCellIndex];
+                                  let imageIndex = oViewImage.Cell.imageIdx + 1;
                                   let seriesId = _thumbnail.series[oViewImage.Cell.seriesIdx].seriesInstanceUID;
-
-                                  let imageIndex = oViewImage.Cell.imageIdx+1;
-
                                   let param = {};
                                   param.detail = {
-                                      "seriesId" : seriesId,
-                                      "imageIndex" : imageIndex
+                                      "seriesId": seriesId,
+                                      "imageIndex": imageIndex
                                   };
-
                                   _this.dispatchEvent(new CustomEvent('setSelectedSeriesInfoEvent', param));
                               }
                           }
