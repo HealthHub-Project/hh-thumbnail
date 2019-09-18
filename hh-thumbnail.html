@@ -122,6 +122,9 @@
       /**
        * `hh-thumbnail`
        *
+       * @Version 1.0.1
+       * @Date    20190918
+       *
        * @customElement
        * @polymer
        * @demo demo/index.html
@@ -230,9 +233,9 @@
                   });
 
                   // series Description default setting
-                  _this.$.setSeriesDesc.active = true;
+                  this.$.setSeriesDesc.active = true;
                   // series Description on/off
-                  _this.$.setSeriesDesc.addEventListener("active-changed", () => {
+                  this.$.setSeriesDesc.addEventListener("active-changed", () => {
                       _this.drawImages();
                   });
 
@@ -866,8 +869,8 @@
                                           };
                                       }).then(value => {
                                           Info.Context.drawImage(value, oPos.Position.X+centerWidth, oPos.Position.Y+centerHeight, resizeWidth-2, resizeHeight-2);
-
-                                          let seriesDesc = _thumbnail.series[oPos.Cell.seriesIdx].seriesDescription;
+                                          let seriesDesc = "";
+                                          if(_thumbnail.series[oPos.Cell.seriesIdx].seriesDescription) seriesDesc =_thumbnail.series[oPos.Cell.seriesIdx].seriesDescription;
                                           let imgTotalCnt = _thumbnail.series[oPos.Cell.seriesIdx].image.length;
                                           let imgCnt = oPos.Cell.imageIdx + 1;
                                           let cntInfo = imgCnt + "/" + imgTotalCnt;

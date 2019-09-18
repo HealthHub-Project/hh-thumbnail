@@ -1,7 +1,7 @@
 {
   "name": "hh-thumbnail",
   "main": "hh-thumbnail.html",
-  "version":"1.0.0",
+  "version":"1.0.1",
   "dependencies": {
     "paper-tooltip": "PolymerElements/paper-tooltip#2.1.1",
     "paper-icon-button": "PolymerElements/paper-icon-button#2.2.1",
