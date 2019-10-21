@@ -132,7 +132,7 @@
       (function () {
           let _this;
 
-          window.requestFileSystem  = window.requestFileSystem || window.webkitRequestFileSystem;
+        //   window.requestFileSystem  = window.requestFileSystem || window.webkitRequestFileSystem;
 
           const type = {
               TOAST: 'toast'
@@ -762,88 +762,7 @@
                           let oPos = _infoSize.Position[series];
                           // if(oPos !== undefined && _thumbnail.studies[0].series[oPos.Cell.seriesIdx] !== undefined){
                           if(oPos !== undefined && oPos.Cell !== null) {
-                              let img = new Image();
-                              let seriesId = _thumbnail.series[oPos.Cell.seriesIdx].seriesInstanceUID;
-                              let imageId = _thumbnail.series[oPos.Cell.seriesIdx].image[oPos.Cell.imageIdx].contentID;
-
-                              // 원본 이미지 크기
-                              let imgWidth = _thumbnail.series[oPos.Cell.seriesIdx].image[oPos.Cell.imageIdx].width;
-                              let imgHeight = _thumbnail.series[oPos.Cell.seriesIdx].image[oPos.Cell.imageIdx].height;
-
-                              // cell 크기
-                              let maxWidth = oPos.Size.Width;
-                              let maxHeight = oPos.Size.Height;
-
-                              // 사이즈 조정 이미지 크기
-                              let resizeWidth;
-                              let resizeHeight;
-
-                              // 이미지 비율
-                              if (imgWidth > imgHeight) {
-                                  resizeWidth = maxWidth;
-                                  resizeHeight = Math.round((imgHeight * resizeWidth) / imgWidth);
-                              } else {
-                                  resizeHeight = maxHeight;
-                                  resizeWidth = Math.round((imgWidth * resizeHeight) / imgHeight);
-                              }
-
-                              // 비율 맞춘 이미지가 클 경우 축소
-                              let scaleX = maxWidth / resizeWidth;
-                              let scaleY = maxHeight / resizeHeight;
-
-                              let scale = (scaleX < scaleY) ? scaleX : scaleY;
-
-                              if(scale>1){
-                                  scale=1;
-                              }
-                              resizeWidth = scale*resizeWidth;
-                              resizeHeight = scale*resizeHeight;
-
-                              // 이미지 중앙에 위치
-                              let centerWidth = (maxWidth-resizeWidth)/2;
-                              let centerHeight = (maxHeight-resizeHeight)/2;
-
-                              if(centerWidth===0){
-                                  centerWidth=2;
-                              }
-
-                              if(centerHeight===0){
-                                  centerHeight=2;
-                              }
-
-                              window.requestFileSystem(window.TEMPORARY, 1024*1024, function (fs) {
-                                  fs.root.getFile('/thumbnail/'+_workListObjId+"/"+seriesId+"/"+imageId, {create: true}, function images(fileEntry) {
-                                      return new Promise(resolve => {
-                                          img.src = fileEntry.toURL();
-                                          img.onload = () => {
-                                              resolve(img);
-                                          };
-                                      }).then(value => {
-                                          Info.Context.drawImage(value, oPos.Position.X+centerWidth, oPos.Position.Y+centerHeight, resizeWidth-2, resizeHeight-2);
-
-                                          let seriesDesc = _thumbnail.series[oPos.Cell.seriesIdx].seriesDescription;
-                                          let imgTotalCnt = _thumbnail.series[oPos.Cell.seriesIdx].image.length;
-                                          let imgCnt = oPos.Cell.imageIdx;
-                                          let cntInfo = imgCnt + "/" + imgTotalCnt;
-
-                                          if (seriesDesc === "hie_unknown" || !seriesDesc) {
-                                              if (fileType == "KeyImage") {
-                                                  seriesDesc = "Key";
-                                              } else {
-                                                  seriesDesc = "N/A";
-                                              }
-                                          }
-
-                                          seriesDesc = _this.trim(seriesDesc);
-                                          if (fileType == "KeyImage") {
-                                              _this.drawTextDesc(seriesDesc, oPos.Position.X + 5, oPos.Position.Y + 5, maxWidth - 10, 1.0, "red");
-                                          } else {
-                                              _this.drawTextDesc(seriesDesc, oPos.Position.X + 5, oPos.Position.Y + 5, maxWidth - 10, 1.0, "white");
-                                          }
-                                          _this.drawTextCnt(cntInfo, oPos.Position.X + 5, oPos.Position.Y + maxHeight - 2);
-                                      })
-                                  }, _this.errorHandler);
-                              }, _this.errorHandler);
+                              this.drawImage(oPos);
                           }
                           else {
                               break;
