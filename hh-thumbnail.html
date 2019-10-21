@@ -216,6 +216,9 @@
                       seriesDesc: {
                           type: String,
                           value: ""
+                      },
+                      prefetch: {
+                          type: Object
                       }
                   };
               }
@@ -227,6 +230,12 @@
 
               ready() {
                   super.ready();
+
+                  this.prefetch = Prefetch.create(config);
+                  this.prefetch.on(Prefetch.EVENTS.IMAGE_ADDED, image => {});
+                  this.prefetch.on(Prefetch.EVENTS.IMAGE_DONE, image => {});
+                  this.prefetch.on(Prefetch.EVENTS.IMAGE_NOT_EXISTS, image => {});
+                  this.prefetch.on(Prefetch.EVENTS.IMAGE_ERROR, (image, message, error) => {});
 
                   window.addEventListener('WebComponentsReady', e => {
                       _this.startBody();
@@ -252,7 +261,15 @@
               setExambyId(id, resultThumbnail) {
                   _workListObjId = id;
 
-                  if(_infoSize.Position !== undefined && resultThumbnail !== undefined && typeof(resultThumbnail.series) != "undefined"){
+                  if(_infoSize.Position !== undefined && resultThumbnail !== undefined && typeof(resultThumbnail.series) != "undefined") {
+                    (resultThumbnail.series||[]).forEach(series => {
+                        const images = (series.image||[]).map(m => {
+                            return {id: m.contentID, path: '/prefetch/download/image/'+ m.contentID + '/small', series: series.seriesInstanceUID, study: id};
+                        });
+
+                        this.prefetch.add(images, 1);
+                    });
+
                       _seriesLen = resultThumbnail.series.length;
                       _this.seriesPagingClear();
                       _this.startBody();
@@ -860,6 +877,41 @@
                                   centerHeight=2;
                               }
 
+                              new Promise(resolve => {
+                                  img.src = '/resource/images/loading-image.png';
+                                  img.onload = () => {
+                                      resolve(img);
+                                  };
+                              }).then(value => {
+                                Info.Context.drawImage(value, oPos.Position.X+centerWidth, oPos.Position.Y+centerHeight, resizeWidth-2, resizeHeight-2);
+                                let seriesDesc = "";
+                                if(_thumbnail.series[oPos.Cell.seriesIdx].seriesDescription) seriesDesc =_thumbnail.series[oPos.Cell.seriesIdx].seriesDescription;
+                                let imgTotalCnt = _thumbnail.series[oPos.Cell.seriesIdx].image.length;
+                                let imgCnt = oPos.Cell.imageIdx + 1;
+                                let cntInfo = imgCnt + "/" + imgTotalCnt;
+                                let fileType = _thumbnail.series[oPos.Cell.seriesIdx].fileType;
+
+
+                                if (seriesDesc === "hie_unknown" || !seriesDesc) {
+                                    if (fileType == "KeyImage") {
+                                        seriesDesc = "Key";
+                                    } else {
+                                        seriesDesc = "N/A";
+                                    }
+                                }
+
+                                seriesDesc = _this.trim(seriesDesc);
+
+                                if (_this.$.setSeriesDesc.active) {
+                                    if (fileType == "KeyImage") {
+                                        _this.drawTextDesc(seriesDesc, oPos.Position.X + 5, oPos.Position.Y + 5, maxWidth - 10, 1.0, "red");
+                                    } else {
+                                        _this.drawTextDesc(seriesDesc, oPos.Position.X + 5, oPos.Position.Y + 5, maxWidth - 10, 1.0, "white");
+                                    }
+                                    _this.drawTextCnt(cntInfo, oPos.Position.X + 5, oPos.Position.Y + maxHeight - 2);
+                                }
+                              });
+                              /*
                               window.requestFileSystem(window.TEMPORARY, 1024*1024, function (fs) {
                                   fs.root.getFile('/thumbnail/'+_workListObjId+"/"+seriesId+"/"+imageId, {create: true}, function images(fileEntry) {
                                       return new Promise(resolve => {
@@ -898,6 +950,7 @@
                                       })
                                   }, _this.errorHandler);
                               }, _this.errorHandler);
+                              */
                           }
                           else {
                               break;
