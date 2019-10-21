@@ -217,25 +217,43 @@
                           type: String,
                           value: ""
                       },
-                      prefetch: {
+                      m_prefetch: {
                           type: Object
+                      },
+                      m_thumbs: {
+                          type: Map
                       }
                   };
               }
 
               constructor() {
                   super();
+
+                  this.m_thumbs = new Map();
                   _this = this;
               }
 
               ready() {
                   super.ready();
 
-                  this.prefetch = Prefetch.create(config);
-                  this.prefetch.on(Prefetch.EVENTS.IMAGE_ADDED, image => {});
-                  this.prefetch.on(Prefetch.EVENTS.IMAGE_DONE, image => {});
-                  this.prefetch.on(Prefetch.EVENTS.IMAGE_NOT_EXISTS, image => {});
-                  this.prefetch.on(Prefetch.EVENTS.IMAGE_ERROR, (image, message, error) => {});
+                  const config = {
+                        url: imageDownloadUrl,
+                        method: 'GET',
+                        headers: { 'Authorization': localStorage.getItem('jwt') },
+                        maxImageWorker: 10
+                    };
+                  this.m_prefetch = Prefetch.create(config);
+                  this.m_prefetch.on(Prefetch.EVENTS.IMAGE_DONE, image => {
+                      this.setThumbImage(image, (window.URL || window.webkitURL).createObjectURL(image.blob));
+                  });
+                  this.m_prefetch.on(Prefetch.EVENTS.IMAGE_NOT_EXISTS, image => {
+                      this.setThumbImage(image, '/resource/images/notfound-image.png');
+                  });
+                  this.m_prefetch.on(Prefetch.EVENTS.IMAGE_ERROR, (image, message, error) => {
+                      console.error('thumbnail download error', error);
+                      //TODO: 오류 이미지도 필요함.
+                      this.setThumbImage(image, '/resource/images/notfound-image.png');
+                  });
 
                   window.addEventListener('WebComponentsReady', e => {
                       _this.startBody();
@@ -250,6 +268,23 @@
 
               }
 
+              setThumbImage(image, src) {
+                let series = this.m_thumbs.get(image.series);
+                if(!series) {
+                    series = new Map();
+                    this.m_thumbs.set(image.series, series);
+                }
+                series.set(image.id, src);//(window.URL || window.webkitURL).createObjectURL(image.blob));
+
+                let oPos = _infoSize.Position[image.seriesIdx];
+                if(oPos) {
+                if(_thumbnail.series[oPos.Cell.seriesIdx].image[oPos.Cell.imageIdx].seriesInstanceUID === image.series
+                    && _thumbnail.series[oPos.Cell.seriesIdx].image[oPos.Cell.imageIdx].contentID === image.id) {
+                        this.drawImage(oPos);
+                    }
+                }
+              }
+
               /**
                * function setExamInfo
                * RequestObjectId로 의뢰 이미지 조회 후 출력
@@ -260,16 +295,17 @@
                **/
               setExambyId(id, resultThumbnail) {
                   _workListObjId = id;
+                  this.m_thumbs.clear();
+                  this.m_prefetch.reset();
 
-                  if(_infoSize.Position !== undefined && resultThumbnail !== undefined && typeof(resultThumbnail.series) != "undefined") {
-                    (resultThumbnail.series||[]).forEach(series => {
-                        const images = (series.image||[]).map(m => {
-                            return {id: m.contentID, path: '/prefetch/download/image/'+ m.contentID + '/small', series: series.seriesInstanceUID, study: id};
-                        });
-                        console.log(id, images);
-                        this.prefetch.add(images, 1);
-                    });
+                  if(_infoSize.Position !== undefined && resultThumbnail !== undefined && typeof(resultThumbnail.series) != "undefined"){
+                      (resultThumbnail.series||[]).forEach((series, seriesIdx) => {
+                          const images = (series.image||[]).map((m, imageIdx) => {
+                              return {id: m.contentID, imageIdx: imageIdx, seriesIdx: seriesIdx, series: series.seriesInstanceUID, study: id, path: '/prefetch/download/image/'+ m.contentID + '/small'};
+                          });
 
+                          this.m_prefetch.add(images, 1);
+                      });
                       _seriesLen = resultThumbnail.series.length;
                       _this.seriesPagingClear();
                       _this.startBody();
@@ -825,138 +861,118 @@
                           if(oPos !== undefined && oPos.Cell !== null) {
                               g_tabPos.push(oPos);
 
-                              let img = new Image();
-                              // let seriesId = _thumbnail.series[oPos.Cell.seriesIdx].seriesInstanceUID;
-                              let seriesId = _thumbnail.series[oPos.Cell.seriesIdx].image[oPos.Cell.imageIdx].seriesInstanceUID;
-                              let imageId = _thumbnail.series[oPos.Cell.seriesIdx].image[oPos.Cell.imageIdx].contentID;
-
-                              // 원본 이미지 크기
-                              let imgWidth = _thumbnail.series[oPos.Cell.seriesIdx].image[oPos.Cell.imageIdx].width;
-                              let imgHeight = _thumbnail.series[oPos.Cell.seriesIdx].image[oPos.Cell.imageIdx].height;
-
-                              // cell 크기
-                              let maxWidth = oPos.Size.Width;
-                              let maxHeight = oPos.Size.Height;
-
-                              // 사이즈 조정 이미지 크기
-                              let resizeWidth;
-                              let resizeHeight;
-
-                              // 이미지 비율
-                              if (imgWidth > imgHeight) {
-                                  resizeWidth = maxWidth;
-                                  resizeHeight = Math.round((imgHeight * resizeWidth) / imgWidth);
-                              } else {
-                                  resizeHeight = maxHeight;
-                                  resizeWidth = Math.round((imgWidth * resizeHeight) / imgHeight);
-                              }
-
-                              // 비율 맞춘 이미지가 클 경우 축소
-                              let scaleX = maxWidth / resizeWidth;
-                              let scaleY = maxHeight / resizeHeight;
-
-                              let scale = (scaleX < scaleY) ? scaleX : scaleY;
-
-                              if(scale>1){
-                                  scale=1;
-                              }
-                              resizeWidth = scale*resizeWidth;
-                              resizeHeight = scale*resizeHeight;
-
-                              // 이미지 중앙에 위치
-                              let centerWidth = (maxWidth-resizeWidth)/2;
-                              let centerHeight = (maxHeight-resizeHeight)/2;
-                              let testHeight = (maxHeight-resizeHeight);
-
-
-                              if(centerWidth===0){
-                                  centerWidth=2;
-                              }
-
-                              if(centerHeight===0){
-                                  centerHeight=2;
-                              }
-
-                              new Promise(resolve => {
-                                  img.src = '/resource/images/loading-image.png';
-                                  img.onload = () => {
-                                      resolve(img);
-                                  };
-                              }).then(value => {
-                                Info.Context.drawImage(value, oPos.Position.X+centerWidth, oPos.Position.Y+centerHeight, resizeWidth-2, resizeHeight-2);
-                                let seriesDesc = "";
-                                if(_thumbnail.series[oPos.Cell.seriesIdx].seriesDescription) seriesDesc =_thumbnail.series[oPos.Cell.seriesIdx].seriesDescription;
-                                let imgTotalCnt = _thumbnail.series[oPos.Cell.seriesIdx].image.length;
-                                let imgCnt = oPos.Cell.imageIdx + 1;
-                                let cntInfo = imgCnt + "/" + imgTotalCnt;
-                                let fileType = _thumbnail.series[oPos.Cell.seriesIdx].fileType;
-
-
-                                if (seriesDesc === "hie_unknown" || !seriesDesc) {
-                                    if (fileType == "KeyImage") {
-                                        seriesDesc = "Key";
-                                    } else {
-                                        seriesDesc = "N/A";
-                                    }
-                                }
-
-                                seriesDesc = _this.trim(seriesDesc);
-
-                                if (_this.$.setSeriesDesc.active) {
-                                    if (fileType == "KeyImage") {
-                                        _this.drawTextDesc(seriesDesc, oPos.Position.X + 5, oPos.Position.Y + 5, maxWidth - 10, 1.0, "red");
-                                    } else {
-                                        _this.drawTextDesc(seriesDesc, oPos.Position.X + 5, oPos.Position.Y + 5, maxWidth - 10, 1.0, "white");
-                                    }
-                                    _this.drawTextCnt(cntInfo, oPos.Position.X + 5, oPos.Position.Y + maxHeight - 2);
-                                }
-                              });
-                              /*
-                              window.requestFileSystem(window.TEMPORARY, 1024*1024, function (fs) {
-                                  fs.root.getFile('/thumbnail/'+_workListObjId+"/"+seriesId+"/"+imageId, {create: true}, function images(fileEntry) {
-                                      return new Promise(resolve => {
-                                          img.src = fileEntry.toURL();
-                                          img.onload = () => {
-                                              resolve(img);
-                                          };
-                                      }).then(value => {
-                                          Info.Context.drawImage(value, oPos.Position.X+centerWidth, oPos.Position.Y+centerHeight, resizeWidth-2, resizeHeight-2);
-                                          let seriesDesc = "";
-                                          if(_thumbnail.series[oPos.Cell.seriesIdx].seriesDescription) seriesDesc =_thumbnail.series[oPos.Cell.seriesIdx].seriesDescription;
-                                          let imgTotalCnt = _thumbnail.series[oPos.Cell.seriesIdx].image.length;
-                                          let imgCnt = oPos.Cell.imageIdx + 1;
-                                          let cntInfo = imgCnt + "/" + imgTotalCnt;
-                                          let fileType = _thumbnail.series[oPos.Cell.seriesIdx].fileType;
-
-
-                                          if (seriesDesc === "hie_unknown" || !seriesDesc) {
-                                              if (fileType == "KeyImage") {
-                                                  seriesDesc = "Key";
-                                              } else {
-                                                  seriesDesc = "N/A";
-                                              }
-                                          }
-
-                                          seriesDesc = _this.trim(seriesDesc);
-
-                                          if (_this.$.setSeriesDesc.active) {
-                                              if (fileType == "KeyImage") {
-                                                  _this.drawTextDesc(seriesDesc, oPos.Position.X + 5, oPos.Position.Y + 5, maxWidth - 10, 1.0, "red");
-                                              } else {
-                                                  _this.drawTextDesc(seriesDesc, oPos.Position.X + 5, oPos.Position.Y + 5, maxWidth - 10, 1.0, "white");
-                                              }
-                                              _this.drawTextCnt(cntInfo, oPos.Position.X + 5, oPos.Position.Y + maxHeight - 2);
-                                          }
-                                      })
-                                  }, _this.errorHandler);
-                              }, _this.errorHandler);
-                              */
+                              this.drawImage(oPos);
                           }
                           else {
                               break;
                           }
                       }
                   }
+              }
+
+              getFile(seriesId, imageId) {
+                  return new Promise(resolve => {
+                      const series = this.m_thumbs.get(seriesId);
+                      if(series) {
+                        const image = series.get(imageId);
+                        if(image) resolve(image);
+                        else resolve('/resource/images/loading-image.png');
+                      } else {
+                          resolve('/resource/images/loading-image.png');
+                      }
+                  });
+              }
+
+              drawImage(oPos) {
+                let img = new Image();
+                // let seriesId = _thumbnail.series[oPos.Cell.seriesIdx].seriesInstanceUID;
+                let seriesId = _thumbnail.series[oPos.Cell.seriesIdx].image[oPos.Cell.imageIdx].seriesInstanceUID;
+                let imageId = _thumbnail.series[oPos.Cell.seriesIdx].image[oPos.Cell.imageIdx].contentID;
+
+                // 원본 이미지 크기
+                let imgWidth = _thumbnail.series[oPos.Cell.seriesIdx].image[oPos.Cell.imageIdx].width;
+                let imgHeight = _thumbnail.series[oPos.Cell.seriesIdx].image[oPos.Cell.imageIdx].height;
+
+                // cell 크기
+                let maxWidth = oPos.Size.Width;
+                let maxHeight = oPos.Size.Height;
+
+                // 사이즈 조정 이미지 크기
+                let resizeWidth;
+                let resizeHeight;
+
+                // 이미지 비율
+                if (imgWidth > imgHeight) {
+                    resizeWidth = maxWidth;
+                    resizeHeight = Math.round((imgHeight * resizeWidth) / imgWidth);
+                } else {
+                    resizeHeight = maxHeight;
+                    resizeWidth = Math.round((imgWidth * resizeHeight) / imgHeight);
+                }
+
+                // 비율 맞춘 이미지가 클 경우 축소
+                let scaleX = maxWidth / resizeWidth;
+                let scaleY = maxHeight / resizeHeight;
+
+                let scale = (scaleX < scaleY) ? scaleX : scaleY;
+
+                if(scale>1){
+                    scale=1;
+                }
+                resizeWidth = scale*resizeWidth;
+                resizeHeight = scale*resizeHeight;
+
+                // 이미지 중앙에 위치
+                let centerWidth = (maxWidth-resizeWidth)/2;
+                let centerHeight = (maxHeight-resizeHeight)/2;
+                let testHeight = (maxHeight-resizeHeight);
+
+
+                if(centerWidth===0){
+                    centerWidth=2;
+                }
+
+                if(centerHeight===0){
+                    centerHeight=2;
+                }
+
+                this.getFile(seriesId, imageId).then(src => {
+                    return new Promise(resolve => {
+                        img.src = src;
+                        img.onload = () => {
+                            resolve(img);
+                        }
+                    }).then(value => {
+                    Info.Context.drawImage(value, oPos.Position.X+centerWidth, oPos.Position.Y+centerHeight, resizeWidth-2, resizeHeight-2);
+
+                    let seriesDesc = "";
+                    if(_thumbnail.series[oPos.Cell.seriesIdx].seriesDescription) seriesDesc =_thumbnail.series[oPos.Cell.seriesIdx].seriesDescription;
+                    let imgTotalCnt = _thumbnail.series[oPos.Cell.seriesIdx].image.length;
+                    let imgCnt = oPos.Cell.imageIdx + 1;
+                    let cntInfo = imgCnt + "/" + imgTotalCnt;
+                    let fileType = _thumbnail.series[oPos.Cell.seriesIdx].fileType;
+
+
+                    if (seriesDesc === "hie_unknown" || !seriesDesc) {
+                        if (fileType == "KeyImage") {
+                            seriesDesc = "Key";
+                        } else {
+                            seriesDesc = "N/A";
+                        }
+                    }
+
+                    seriesDesc = _this.trim(seriesDesc);
+
+                    if (_this.$.setSeriesDesc.active) {
+                        if (fileType == "KeyImage") {
+                            _this.drawTextDesc(seriesDesc, oPos.Position.X + 5, oPos.Position.Y + 5, maxWidth - 10, 1.0, "red");
+                        } else {
+                            _this.drawTextDesc(seriesDesc, oPos.Position.X + 5, oPos.Position.Y + 5, maxWidth - 10, 1.0, "white");
+                        }
+                        _this.drawTextCnt(cntInfo, oPos.Position.X + 5, oPos.Position.Y + maxHeight - 2);
+                    }
+                    });
+                });
               }
 
               /**
