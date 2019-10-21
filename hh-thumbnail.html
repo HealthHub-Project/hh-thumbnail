@@ -266,7 +266,7 @@
                         const images = (series.image||[]).map(m => {
                             return {id: m.contentID, path: '/prefetch/download/image/'+ m.contentID + '/small', series: series.seriesInstanceUID, study: id};
                         });
-
+                        console.log(id, images);
                         this.prefetch.add(images, 1);
                     });
 
