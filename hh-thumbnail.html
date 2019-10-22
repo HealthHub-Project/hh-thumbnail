@@ -222,6 +222,10 @@
                       },
                       m_thumbs: {
                           type: Map
+                      },
+                      maxImageWorker: {
+                          type: Number,
+                          value: 10
                       }
                   };
               }
@@ -240,7 +244,7 @@
                         url: imageDownloadUrl,
                         method: 'GET',
                         headers: { 'Authorization': localStorage.getItem('jwt') },
-                        maxImageWorker: 10
+                        maxImageWorker: this.maxImageWorker
                     };
                   this.m_prefetch = Prefetch.create(config);
                   this.m_prefetch.on(Prefetch.EVENTS.IMAGE_DONE, image => {
@@ -299,17 +303,23 @@
                   this.m_prefetch.reset();
 
                   if(_infoSize.Position !== undefined && resultThumbnail !== undefined && typeof(resultThumbnail.series) != "undefined"){
-                      (resultThumbnail.series||[]).forEach((series, seriesIdx) => {
-                          const images = (series.image||[]).map((m, imageIdx) => {
-                              return {id: m.contentID, imageIdx: imageIdx, seriesIdx: seriesIdx, series: series.seriesInstanceUID, study: id, path: '/prefetch/download/image/'+ m.contentID + '/small'};
-                          });
-
-                          this.m_prefetch.add(images, 1);
-                      });
                       _seriesLen = resultThumbnail.series.length;
                       _this.seriesPagingClear();
                       _this.startBody();
                       _this.setCellThumbnail(resultThumbnail);
+
+                    (resultThumbnail.series||[]).forEach((series, seriesIdx) => {
+                      const oPos = _infoSize.Position[seriesIdx];
+                      (series.image||[]).map((m, imageIdx) => {
+                        const image = {id: m.contentID, imageIdx: imageIdx, seriesIdx: seriesIdx, series: series.seriesInstanceUID, study: id, path: '/prefetch/download/image/'+ m.contentID + '/small'};
+
+                        if(oPos && (oPos.Cell||{}).imageIdx === imageIdx) {
+                          this.m_prefetch.add(image, 1);
+                        } else {
+                          this.m_prefetch.add(image, 2);
+                        }
+                      });
+                    });
                   }
               }
 
