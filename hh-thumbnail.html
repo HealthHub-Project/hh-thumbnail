@@ -272,26 +272,22 @@
 
         }
 
-        setThumbImage(image, src) {
-          let series = this.m_thumbs.get(image.series);
-          if(!series) {
-            series = new Map();
-            this.m_thumbs.set(image.series, series);
-          }
-          series.set(image.id, src);//(window.URL || window.webkitURL).createObjectURL(image.blob));
+          setThumbImage(image, src) {
+              let series = this.m_thumbs.get(image.series);
+              if (!series) {
+                  series = new Map();
+                  this.m_thumbs.set(image.series, series);
+              }
+              series.set(image.id, src);//(window.URL || window.webkitURL).createObjectURL(image.blob));
 
-          let oPos = _infoSize.Position[image.seriesIdx];
-          if(oPos) {
-            // if(_thumbnail.series[oPos.Cell.seriesIdx].image[oPos.Cell.imageIdx].seriesInstanceUID === image.series
-            //     && _thumbnail.series[oPos.Cell.seriesIdx].image[oPos.Cell.imageIdx].contentID === image.id) {
-            //         this.drawImage(oPos);
-            //     }
-            // }
-            if(_thumbnail.series[oPos.Cell.seriesIdx].image[oPos.Cell.imageIdx].contentID === image.id) {
-              this.drawImage(oPos);
-            }
+              let oPos = _infoSize.Position[image.seriesIdx];
+              if (oPos) {
+                  if (_thumbnail.series[oPos.Cell.seriesIdx].image[oPos.Cell.imageIdx].seriesInstanceUID === image.series
+                      && _thumbnail.series[oPos.Cell.seriesIdx].image[oPos.Cell.imageIdx].contentID === image.id) {
+                      this.drawImage(oPos);
+                  }
+              }
           }
-        }
 
         /**
          * function setExamInfo
